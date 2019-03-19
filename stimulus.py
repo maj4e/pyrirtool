@@ -24,7 +24,7 @@ class stimulus:
 
         if self.type == 'sinesweep':
 
-            f1 = 0.01           # start of sweep in Hz.
+            f1 = 1             # start of sweep in Hz.
             f2 = int(fs/2)      # end of sweep in Hz. Sweep till Nyquist to avoid ringing
 
             w1 = 2*pi*f1/fs     # start of sweep in rad/sample
@@ -42,20 +42,27 @@ class stimulus:
             k = np.flipud(sinsweep)
             error = 1
             counter = 0
-            while error > 0.01:
+            while error > 0.001:
                 error = np.abs(k[counter])
                 counter = counter+1
+        
 
             k = k[counter::]
             sinsweep_hat = np.flipud(k)
-            sinsweep = np.zeros(shape = (numSamples,1))
+            sinsweep = np.zeros(shape = (numSamples,))
             sinsweep[0:sinsweep_hat.shape[0]] = sinsweep_hat
 
 
-            # the convolutional inverse (inverse filter)
+            # the convolutional inverse
             envelope = (w2/w1)**(-taxis); # Holters2009, Eq.(9)
-            # Envelope is used to compensate for the non-white spectrum. Derivation?
             invfilter = np.flipud(sinsweep)*envelope
+            scaling = pi*numSamples*(w1/w2-1)/(2*(w2-w1)*log(w1/w2))*(w2-w1)/pi; # Holters2009, Eq.10
+
+            # fade-in window. Fade out removed because causes ringing - cropping at zero cross instead
+            taperStart = signal.tukey(numSamples,0.05)
+            taperWindow = np.ones(shape = (numSamples,))
+            taperWindow[0:int(numSamples/2)] = taperStart[0:int(numSamples/2)]
+            sinsweep = sinsweep*taperWindow
 
             # Final excitation including repetition and pauses
             sinsweep = np.expand_dims(sinsweep,axis = 1)
@@ -64,7 +71,6 @@ class stimulus:
             sinsweep = np.concatenate((np.concatenate((zerostart, sinsweep), axis = 0), zeroend), axis=0)
             sinsweep = np.transpose(np.tile(np.transpose(sinsweep),repetitions))
 
-            scaling = pi*numSamples*(w1/w2-1)/(2*(w2-w1)*log(w1/w2))*(w2-w1)/pi; # Holters2009, Eq.10
 
             # Set the attributes
             self.Lp = (silenceAtStart + silenceAtEnd + duration)*fs;
@@ -88,14 +94,16 @@ class stimulus:
 
             for idx in range(0,numChans):
 
-                currentChannel = systemOutput[0:self.repetitions*self.Lp,idx]
+                #currentChannel = systemOutput[0:self.repetitions*self.Lp,idx]
+                currentChannel = systemOutput[:,idx]
+                RIRs[:,idx] = fftconvolve(self.invfilter,currentChannel);
 
-                # Average over the repetitions
-                sig_reshaped = currentChannel.reshape((self.repetitions,self.Lp))
-                sig_avg = np.mean(sig_reshaped,axis = 0)
+                # Average over the repetitions - DEPRECATED. Should not be done.
+                #sig_reshaped = currentChannel.reshape((self.repetitions,self.Lp))
+                #sig_avg = np.mean(sig_reshaped,axis = 0)
 
                 # Deconvolution
-                RIRs[:,idx] = fftconvolve(self.invfilter,sig_avg);
+                #RIRs[:,idx] = fftconvolve(self.invfilter,sig_avg);
 
             return RIRs
 
