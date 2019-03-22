@@ -7,8 +7,14 @@
 ############################################
 __pycache__/
 *.py[cod]
+
+# Data files
+############################################
 *.npy
 *.wav
+
+# Local scripts for testing
+############################################
 rirstuff.py
 rirscript.py
 recnoise.py
