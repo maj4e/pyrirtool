@@ -24,7 +24,7 @@ class stimulus:
 
         if self.type == 'sinesweep':
 
-            f1 = 1             # start of sweep in Hz.
+            f1 = 0.01             # start of sweep in Hz.
             f2 = int(fs/2)      # end of sweep in Hz. Sweep till Nyquist to avoid ringing
 
             w1 = 2*pi*f1/fs     # start of sweep in rad/sample
@@ -39,13 +39,13 @@ class stimulus:
             sinsweep = amplitude * sin(w1*(numSamples-1)/lw * (exp(taxis*lw)-1));
 
             # Find the last zero crossing to avoid the need for fadeout
+            # Comment the whole block to remove this
             k = np.flipud(sinsweep)
             error = 1
             counter = 0
             while error > 0.001:
                 error = np.abs(k[counter])
                 counter = counter+1
-        
 
             k = k[counter::]
             sinsweep_hat = np.flipud(k)
@@ -59,7 +59,7 @@ class stimulus:
             scaling = pi*numSamples*(w1/w2-1)/(2*(w2-w1)*log(w1/w2))*(w2-w1)/pi; # Holters2009, Eq.10
 
             # fade-in window. Fade out removed because causes ringing - cropping at zero cross instead
-            taperStart = signal.tukey(numSamples,0.05)
+            taperStart = signal.tukey(numSamples,0)
             taperWindow = np.ones(shape = (numSamples,))
             taperWindow[0:int(numSamples/2)] = taperStart[0:int(numSamples/2)]
             sinsweep = sinsweep*taperWindow
@@ -70,7 +70,6 @@ class stimulus:
             zeroend = np.zeros(shape = (silenceAtEnd*fs,1))
             sinsweep = np.concatenate((np.concatenate((zerostart, sinsweep), axis = 0), zeroend), axis=0)
             sinsweep = np.transpose(np.tile(np.transpose(sinsweep),repetitions))
-
 
             # Set the attributes
             self.Lp = (silenceAtStart + silenceAtEnd + duration)*fs;
@@ -96,14 +95,14 @@ class stimulus:
 
                 #currentChannel = systemOutput[0:self.repetitions*self.Lp,idx]
                 currentChannel = systemOutput[:,idx]
-                RIRs[:,idx] = fftconvolve(self.invfilter,currentChannel);
+                # RIRs[:,idx] = fftconvolve(self.invfilter,currentChannel);
 
                 # Average over the repetitions - DEPRECATED. Should not be done.
-                #sig_reshaped = currentChannel.reshape((self.repetitions,self.Lp))
-                #sig_avg = np.mean(sig_reshaped,axis = 0)
+                sig_reshaped = currentChannel.reshape((self.repetitions,self.Lp))
+                sig_avg = np.mean(sig_reshaped,axis = 0)
 
                 # Deconvolution
-                #RIRs[:,idx] = fftconvolve(self.invfilter,sig_avg);
+                RIRs[:,idx] = fftconvolve(self.invfilter,sig_avg);
 
             return RIRs
 
@@ -111,6 +110,8 @@ class stimulus:
 
             raise NameError('Excitation type not implemented')
             return
+
+
 
 
 # End of class definition

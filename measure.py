@@ -27,7 +27,7 @@ parser.add_argument("-r", "--reps", type = int, help = "Number of repetitions of
 #---
 # parser.add_argument("-fr", "--frange", type =  tuple, help = "Frequency range of the sweep (f_min, f_max). Default: (0.01,20000) Hz.", default = (0.01,20000))
 #---
-parser.add_argument("-a", "--amplitude", type = float, help = "Amplitude of the sine. Default: 0.7",default = 0.7)
+parser.add_argument("-a", "--amplitude", type = float, help = "Amplitude of the sine. Default: 0.7",default = 0.5)
 #---
 parser.add_argument("-ss", "--startsilence", type = int, help = "Duration of silence at the start of a sweep, in seconds. Default: 1.", default = 1)
 #---
@@ -42,36 +42,40 @@ parser.add_argument("-chou", "--outputChannelMap", nargs='+', type=int, help = "
 #nargs='+', type=int
 
 #--- arguments for checking and selecting audio interface
-parser.add_argument("-outdev", "--outputdevice", type = int, help = "Output device ID.")
-parser.add_argument("-indev", "--inputdevice", type = int, help = "Input device ID.")
+#parser.add_argument("-outdev", "--outputdevice", type = int, help = "Output device ID.")
+#parser.add_argument("-indev", "--inputdevice", type = int, help = "Input device ID.")
 parser.add_argument('--listdev', help='List the available devices, indicating the default one',
     action='store_true')
-parser.add_argument('--setdev', help='Use this keyword in order to change the default audio interface.',
-    action='store_true')
+#parser.add_argument('--setdev', help='Use this keyword in order to change the default audio interface.',action='store_true')
 parser.add_argument('--test', help = 'Just for debugging: check the output of deconvolution applied directly to the computer-generated sinesweep', action='store_true')
 
 args = parser.parse_args()
 # -------------------------------
 
+sd.default.device = [2,2]
+
+
 if args.listdev == True:
 
     print(sd.query_devices())
-    print("Default input and output device: ", sd.default.device )
-
-elif args.setdev == True:
-
-    if args.inputdevice is not None:
-        sd.default.device[0] = args.inputdevice
-
-    if args.outputdevice is not None:
-        sd.default.device[1] = args.outputdevice
-
     sd.check_input_settings()
     sd.check_output_settings()
-
-    print(sd.query_devices())
     print("Default input and output device: ", sd.default.device )
-    print("Sucessfully selected audio devices. Ready to record.")
+
+# elif args.setdev == True:
+#
+#     if args.inputdevice is not None:
+#         sd.default.device[0] = args.inputdevice
+#
+#     if args.outputdevice is not None:
+#         sd.default.device[1] = args.outputdevice
+#
+#     sd.check_input_settings()
+#     sd.check_output_settings()
+#
+#     print(sd.query_devices())
+#     print("Default input and output device: ", sd.default.device )
+#     print("Sucessfully selected audio devices. Ready to record.")
 
 elif args.test == True:
 
@@ -167,46 +171,15 @@ else:
     np.save(dirname+ '/RIR.npy',RIR)
     np.save(dirname+ '/RIRac.npy',RIRtoSave)
     wavwrite(dirname+ '/sigtest.wav',fs,testStimulus.signal)
-    wavwrite(dirname+ '/sigrec.wav',fs,recorded)
-    wavwrite(dirname+ '/RIR.wav',fs,RIR)
+    #wavwrite(dirname+ '/RIR.wav',fs,RIR)
+    for idx in range(recorded.shape[1]):
+        wavwrite(dirname+ '/sigrec' + str(idx+1) + '.wav',fs,recorded[:,idx])
+        wavwrite(dirname+ '/RIR' + str(idx+1) + '.wav',fs,RIR[:,idx])
 
     # Save them in root for a quick check
     np.save('RIR.npy',RIR)
     np.save( 'RIRac.npy',RIRtoSave)
     wavwrite( 'sigtest.wav',fs,testStimulus.signal)
-    wavwrite('sigrec.wav',fs,recorded)
-    wavwrite('RIR.wav',fs,RIR)
-
-
-
-    # Stuff for plotting
-    # maxval = np.max(RIR)
-    # minval = np.min(RIR)
-    # taxis1 = np.arange(0,RIR.shape[0]/fs,1/fs)
-    # taxis2 = np.arange(0,RIRtoSave.shape[0]/fs,1/fs)
-    #
-    # plt.figure()
-    # plt.plot(taxis1,RIR)
-    # plt.ylim((minval+0.05*minval,maxval+0.05*maxval))
-    # plt.figure()
-    # plt.plot(taxis2,RIRtoSave)
-    # plt.ylim((minval+0.05*minval,maxval+0.05*maxval))
-    #
-    # plt.show()
-
-
-
-
-
-    #if flag_plt:
-    #    rir.analyseRIR(RIRs[:,0],fs)
-
-    #
-    #plt.plot(recorded)
-    #plt.show()
-    #
-    # #wavwrite('newrecording.wav',fs,myrecording)
-    # #len = testStimulus.signal.shape[0]/fs
-    # #taxis = np.arange(0,len,1/fs)
-    # #plt.plot(taxis,testStimulus.signal)
-    # #plt.show()
+    for idx in range(recorded.shape[1]):
+        #wavwrite('RIR' + str(idx+1) + '.wav',fs,RIR[:,idx])
+        wavwrite('sigrec' + str(idx+1) + '.wav',fs,recorded[:,idx])

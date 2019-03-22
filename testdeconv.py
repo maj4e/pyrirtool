@@ -28,7 +28,7 @@ args = parser.parse_args()
 #=======================================
 fs  = 44100
 f1 = 0.1       # start of sweep in Hz.
-f2 = fs/2         # end of sweep in Hz.
+f2 = 15000 #fs/2         # end of sweep in Hz.
 
 duration = 40
 A = 0.7
