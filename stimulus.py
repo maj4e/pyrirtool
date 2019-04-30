@@ -24,7 +24,7 @@ class stimulus:
 
         if self.type == 'sinesweep':
 
-            f1 = 0.01             # start of sweep in Hz.
+            f1 = 1             # start of sweep in Hz.
             f2 = int(fs/2)      # end of sweep in Hz. Sweep till Nyquist to avoid ringing
 
             w1 = 2*pi*f1/fs     # start of sweep in rad/sample
