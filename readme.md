@@ -1,6 +1,6 @@
 # pyrirtool
 
-##### Measuring room impulse responses with ```python``` and ```sounddevice```
+#### Measuring room impulse responses with ```python``` and ```sounddevice```
 
 The code is based on the exponential sine sweep method and its modifications, proposed by A. Farina [1,2].
 
