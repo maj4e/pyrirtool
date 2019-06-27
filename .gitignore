@@ -20,4 +20,5 @@ rirscript.py
 recnoise.py
 rectones.py
 testdeconv.py
-
+local/
+stimuli/

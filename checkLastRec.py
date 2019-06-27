@@ -1,5 +1,4 @@
-#!/Users/mtaseska/.envs/PyPlayrec/bin/python
-
+# Author: Maja Taseska, ESAT-STADIUS, KU LEUVEn
 # Vizualizing the results from the last recording
 
 import numpy as np
@@ -98,13 +97,3 @@ for idx in range(sigrec.shape[1]):
     fig.suptitle('Microphone '+ str(idx + 1))
 
 plt.show()
-
-
-taxis.shape
-faxis.shape
-spectest.shape
-specrec.shape
-
-
-sigrec.shape
-sigtest.shape

@@ -1,25 +1,21 @@
-#!/Users/mtaseska/.envs/PyPlayrec/bin/python
+# ================================================================
+# Room impulse response measurement with an exponential sine sweep
+# ----------------------------------------------------------------
+# Author:                    Maja Taseska, ESAT-STADIUS, KU LEUVEN
+# ================================================================
 
-
-
-# temporary
-import imp
 import os
-
-# required
 import argparse
 import sounddevice as sd
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.io.wavfile import write as wavwrite
 
-# module with the main code
 import stimulus as stim
-imp.reload(stim)
 
 
 # --- parse command line arguments
-parser = argparse.ArgumentParser(description='Setting the parameters for RIR measurement using exponential sine sweep')
+parser = argparse.ArgumentParser(description='Setting the parameters for RIR measurement using exponential sine sweep \n ----------------------------------------------------------------------')
 #---
 parser.add_argument("-f", "--fs", type = int, help=" The sampling rate (make sure it matches that of your audio interface). Default: 44100 Hz.", default = 44100)
 #---
@@ -35,14 +31,8 @@ parser.add_argument("-ss", "--startsilence", type = int, help = "Duration of sil
 #---
 parser.add_argument("-es", "--endsilence", type = int, help = "Duration of silence at the end of a sweep, in seconds. Default: 1.", default = 2)
 #---
-#parser.add_argument('--chin', nargs='+', type=int)
-#parser.add_argument('--chou', nargs='+', type=int)
-
 parser.add_argument("-chin", "--inputChannelMap", nargs='+', type=int, help = "Input channel mapping")
 parser.add_argument("-chou", "--outputChannelMap", nargs='+', type=int, help = "Output channel mapping")
-#---
-#nargs='+', type=int
-
 #--- arguments for checking and selecting audio interface
 #parser.add_argument("-outdev", "--outputdevice", type = int, help = "Output device ID.")
 #parser.add_argument("-indev", "--inputdevice", type = int, help = "Input device ID.")
@@ -90,7 +80,7 @@ elif args.test == True:
     silenceAtEnd = args.endsilence
 
     if repetitions > 1:
-        raise NameError('Synchronous time averaging is not recommended for exponential sweeps. A good averaging method is not implemented. Please use a single long sine sweep (e.g. 15 sec.)')
+        raise NameError('Synchronous time averaging is not recommended for exponential sweeps. A suitable averaging method is not implemented. Please use a single long sine sweep (e.g. 15 sec.)')
 
 
     # Create a test signal object, and generate the excitation
@@ -107,7 +97,6 @@ elif args.test == True:
 else:
 
     # sound device parameters, input and output channels
-
     sd.default.samplerate = args.fs
     sd.default.dtype = 'float32'
 
@@ -122,7 +111,6 @@ else:
         print("Output channels:",channels_out)
     else:
         channels_out = [1]
-
 
     # Set excitation parameters
     type = 'sinesweep'
