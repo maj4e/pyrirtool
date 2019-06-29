@@ -11,7 +11,7 @@ import os
 fs = 44100
 
 # THE ROOM IMPULSE RESPONSES
-RIR = np.load('RIR.npy')
+RIR = np.load('recorded/lastRecording/RIR.npy')
 maxval = np.max(RIR)
 minval = np.min(RIR)
 taxis = np.arange(0,RIR.shape[0]/fs,1/fs)
@@ -35,7 +35,7 @@ for idx in range(numplots):
 
 
 # The emitted and recorded signals
-sigtest, ff = sf.read('sigtest.wav')
+sigtest, ff = sf.read('recorded/lastRecording/sigtest.wav')
 
 sigrec = np.zeros(shape = (sigtest.shape[0],RIR.shape[1]))
 for idx in range(RIR.shape[1]):
@@ -59,7 +59,6 @@ for idx in range(numplots):
 # ax = fig.add_subplot(2,1,2)
 # plt.plot(sigrec, color = 'k')
 # plt.title('Recorded signals', fontsize = 14)
-
 
 # Spectrograms of the emitted and the recorded signals
 # add a tiny amount of noise to avoid zeros

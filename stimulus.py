@@ -24,8 +24,9 @@ class stimulus:
 
         if self.type == 'sinesweep':
 
-            f1 = 1             # start of sweep in Hz.
+            f1 = 50             # start of sweep in Hz.
             f2 = int(fs/2)      # end of sweep in Hz. Sweep till Nyquist to avoid ringing
+
 
             w1 = 2*pi*f1/fs     # start of sweep in rad/sample
             w2 = 2*pi*f2/fs     # end of sweep in rad/sample
@@ -111,8 +112,29 @@ class stimulus:
             raise NameError('Excitation type not implemented')
             return
 
-
-
-
 # End of class definition
 # ===========================================================================
+# ===========================================================================
+# NON-CLASS FUNCTIONS
+
+def test_deconvolution(args):
+
+    type = 'sinesweep'
+    fs = args.fs
+    duration = args.duration
+    amplitude = args.amplitude
+    repetitions = args.reps
+    silenceAtStart = args.startsilence
+    silenceAtEnd = args.endsilence
+
+    if repetitions > 1:
+        raise NameError('Synchronous time averaging is not recommended for exponential sweeps. A suitable averaging method is not implemented. Please use a single long sine sweep (e.g. 15 sec.)')
+
+    # Create a test signal object, and generate the excitation
+    testStimulus = stimulus(type,fs);
+    testStimulus.generate(fs, duration, amplitude,repetitions,silenceAtStart, silenceAtEnd)
+    deltapeak = testStimulus.deconvolve(testStimulus.signal)
+    startid = duration*fs + silenceAtStart*fs -150
+    deltapeak = deltapeak[startid:startid + 300]
+
+    return deltapeak
