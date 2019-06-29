@@ -1,4 +1,5 @@
-# Author: Maja Taseska, ESAT-STADIUS, KU LEUVEn
+# @Author:Maja Taseska, ESAT-STADIUS, KU LEUVEN
+
 # Vizualizing the results from the last recording
 
 import numpy as np
