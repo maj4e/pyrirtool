@@ -6,6 +6,7 @@ The code is based on the exponential sine sweep method and its modifications, pr
 
 
 ## Getting started
+
 ### Required packages
 
 
@@ -13,6 +14,34 @@ The code is based on the exponential sine sweep method and its modifications, pr
 * Computing and signal processing: [```numpy```](https://www.numpy.org) and [```scipy```](https://docs.scipy.org/doc/scipy/reference/signal.html)
 * Recording and playback: [```sounddevice```](https://python-sounddevice.readthedocs.io/en/0.3.12/)
 * Plotting and vizualization [```matplotlib```](https://matplotlib.org)
+
+### First steps
+The main file used to record a room impulse response is ```measure.py```. When running  it for the first time from the terminal, a file with default parameters is created in ```_data/defaults.npy``` (recording doesn't take place when running the script for the first time.)
+```
+=> python measure.py
+Default settings not detected. Creating a defaults file in _data
+```
+
+After default settings have been generated, they can be checked by typing
+```
+python measure.py --defaults
+```
+The output should be (the different parameters will be explained later)
+```
+amplitude => 0.2
+duration => 10
+startsilence => 1
+endsilence => 1
+reps => 1
+fs => 44100
+inputChannelMap => [1]
+outputChannelMap => [1]
+inputdevice => 0
+outputdevice => 1
+sweeprange => [0, 0]
+```
+
+
 
 ### Configuration from the command line
 

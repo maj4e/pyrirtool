@@ -7,112 +7,69 @@ import os
 import sounddevice as sd
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.io.wavfile import write as wavwrite
-#import imp
 
+# modules from this software
 import stimulus as stim
 import _parseargs as parse
+import utils as utils
 
-
-# --- Parse command line arguments
+# --- Parse command line arguments and check defaults
+flag_defaultsInitialized = parse._checkdefaults()
 args = parse._parse()
 parse._defaults(args)
 # -------------------------------
 
-if args.listdev == True:
+if flag_defaultsInitialized == True:
 
-    print(sd.query_devices())
-    sd.check_input_settings()
-    sd.check_output_settings()
-    print("Default input and output device: ", sd.default.device )
+    if args.listdev == True:
 
-elif args.defaults == True:
-    aa = np.load('_data/defaults.npy', allow_pickle = True).item()
-    for i in aa:
-        print (i + " => " + str(aa[i]))
+        print(sd.query_devices())
+        sd.check_input_settings()
+        sd.check_output_settings()
+        print("Default input and output device: ", sd.default.device )
 
-elif args.setdev == True:
+    elif args.defaults == True:
+        aa = np.load('_data/defaults.npy', allow_pickle = True).item()
+        for i in aa:
+            print (i + " => " + str(aa[i]))
 
-    sd.default.device[0] = args.inputdevice
-    sd.default.device[1] = args.outputdevice
+    elif args.setdev == True:
 
-    sd.check_input_settings()
-    sd.check_output_settings()
-    print(sd.query_devices())
-    print("Default input and output device: ", sd.default.device )
-    print("Sucessfully selected audio devices. Ready to record.")
+        sd.default.device[0] = args.inputdevice
+        sd.default.device[1] = args.outputdevice
+        sd.check_input_settings()
+        sd.check_output_settings()
+        print(sd.query_devices())
+        print("Default input and output device: ", sd.default.device )
+        print("Sucessfully selected audio devices. Ready to record.")
+        parse._defaults(args)
 
-elif args.test == True:
+    elif args.test == True:
 
-    deltapeak = stim.test_deconvolution(args)
-    plt.plot(deltapeak)
-    plt.show()
+        deltapeak = stim.test_deconvolution(args)
+        plt.plot(deltapeak)
+        plt.show()
 
-else:
+    else:
 
-    # sounddevice parameters
-    sd.default.samplerate = args.fs
-    sd.default.dtype = 'float32'
-    channels_in = args.inputChannelMap
-    print("Input channels:",  channels_in)
-    channels_out = args.outputChannelMap
-    print("Output channels:",channels_out)
+        # Create a test signal object, and generate the excitation
+        testStimulus = stim.stimulus('sinesweep', args.fs);
+        testStimulus.generate(args.fs, args.duration, args.amplitude,args.reps,args.startsilence, args.endsilence, args.sweeprange)
 
-    # test signal parameters
-    type = 'sinesweep'
-    fs = args.fs
-    duration = args.duration
-    amplitude = args.amplitude
-    repetitions = args.reps
-    silenceAtStart = args.startsilence
-    silenceAtEnd = args.endsilence
+        # Record
+        recorded = utils.record(testStimulus.signal,args.fs,args.inputChannelMap,args.outputChannelMap)
 
-    # Create a test signal object, and generate the excitation
-    testStimulus = stim.stimulus(type,fs);
-    testStimulus.generate(fs, duration, amplitude,repetitions,silenceAtStart, silenceAtEnd)
+        # Deconvolve
+        RIR = testStimulus.deconvolve(recorded)
 
-    # Start the recording
-    recorded = sd.playrec(testStimulus.signal, samplerate=fs, input_mapping = channels_in,output_mapping = channels_out)
-    sd.wait()
+        # Truncate
+        lenRIR = 1.2;
+        startId = testStimulus.signal.shape[0] - args.endsilence*args.fs -1
+        endId = startId + int(lenRIR*args.fs)
+        # save some more samples before linear part to check for nonlinearities
+        startIdToSave = startId - int(args.fs/2)
+        RIRtoSave = RIR[startIdToSave:endId,:]
+        RIR = RIR[startId:endId,:]
 
-    # Get the room impulse response
-    RIR = testStimulus.deconvolve(recorded)
-    # length after truncation
-    lenRIR = 1.2;
-    startId = testStimulus.signal.shape[0] - silenceAtEnd*fs -1
-    endId = startId + int(lenRIR*fs)
-
-    # save some more samples before linear part to check for nonlinearities
-    startIdToSave = startId - int(fs/2)
-    RIRtoSave = RIR[startIdToSave:endId,:]
-    RIR = RIR[startId:endId,:]
-
-    # Create a directory for the new recording
-    dirflag = False
-    counter = 1
-    dirname = 'recorded/newrir1'
-    while dirflag == False:
-        if os.path.exists(dirname):
-            print('Directory exists. Trying another name...')
-            counter = counter + 1
-            dirname = 'recorded/newrir' + str(counter)
-        else:
-            os.mkdir(dirname)
-            print('Success! Recording saved in directory ' + dirname)
-            dirflag = True
-
-    # Saving the RIRs and the captured signals
-    np.save(dirname+ '/RIR.npy',RIR)
-    np.save(dirname+ '/RIRac.npy',RIRtoSave)
-    wavwrite(dirname+ '/sigtest.wav',fs,testStimulus.signal)
-    #wavwrite(dirname+ '/RIR.wav',fs,RIR)
-    for idx in range(recorded.shape[1]):
-        wavwrite(dirname+ '/sigrec' + str(idx+1) + '.wav',fs,recorded[:,idx])
-        wavwrite(dirname+ '/RIR' + str(idx+1) + '.wav',fs,RIR[:,idx])
-
-    # Save in the lastRecording for a quick check
-    np.save('recorded/lastRecording/RIR.npy',RIR)
-    np.save( 'recorded/lastRecording/RIRac.npy',RIRtoSave)
-    wavwrite( 'recorded/lastRecording/sigtest.wav',fs,testStimulus.signal)
-    for idx in range(recorded.shape[1]):
-        wavwrite('sigrec' + str(idx+1) + '.wav',fs,recorded[:,idx])
+        # Save recordings and RIRs
+        utils.saverecording(RIR, RIRtoSave, testStimulus.signal, recorded, args.fs)

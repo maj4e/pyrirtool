@@ -20,13 +20,15 @@ class stimulus:
         self.invfilter = []
 
     # Generate the stimulus and set requred attributes
-    def generate(self, fs, duration, amplitude, repetitions, silenceAtStart, silenceAtEnd):
+    def generate(self, fs, duration, amplitude, repetitions, silenceAtStart, silenceAtEnd,sweeprange):
 
         if self.type == 'sinesweep':
 
-            f1 = 50             # start of sweep in Hz.
-            f2 = int(fs/2)      # end of sweep in Hz. Sweep till Nyquist to avoid ringing
-
+            f1 = np.max((sweeprange[0],1))             # start of sweep in Hz.
+            if sweeprange[1] == 0:
+                f2 = int(fs/2)      # end of sweep in Hz. Sweep till Nyquist to avoid ringing
+            else:
+                f2 = sweeprange[1]
 
             w1 = 2*pi*f1/fs     # start of sweep in rad/sample
             w2 = 2*pi*f2/fs     # end of sweep in rad/sample
@@ -52,7 +54,6 @@ class stimulus:
             sinsweep_hat = np.flipud(k)
             sinsweep = np.zeros(shape = (numSamples,))
             sinsweep[0:sinsweep_hat.shape[0]] = sinsweep_hat
-
 
             # the convolutional inverse
             envelope = (w2/w1)**(-taxis); # Holters2009, Eq.(9)
@@ -126,13 +127,14 @@ def test_deconvolution(args):
     repetitions = args.reps
     silenceAtStart = args.startsilence
     silenceAtEnd = args.endsilence
+    sweeprange = args.sweeprange
 
     if repetitions > 1:
         raise NameError('Synchronous time averaging is not recommended for exponential sweeps. A suitable averaging method is not implemented. Please use a single long sine sweep (e.g. 15 sec.)')
 
     # Create a test signal object, and generate the excitation
     testStimulus = stimulus(type,fs);
-    testStimulus.generate(fs, duration, amplitude,repetitions,silenceAtStart, silenceAtEnd)
+    testStimulus.generate(fs, duration, amplitude,repetitions,silenceAtStart, silenceAtEnd,sweeprange)
     deltapeak = testStimulus.deconvolve(testStimulus.signal)
     startid = duration*fs + silenceAtStart*fs -150
     deltapeak = deltapeak[startid:startid + 300]
